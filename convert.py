@@ -1,19 +1,21 @@
 import requests
 import bibtexparser
 import pandas as pd
+import os
 from bibtexparser.bparser import BibTexParser
-from bibtexparser.customization import convert_to_unicode, author
+from bibtexparser.customization import convert_to_unicode
+from huggingface_hub import HfApi
 
 def get_and_parse_cryptobib():
-    # 1. Define the URLs
-    abbrev_url = "https://cryptobib.di.ens.fr/abbrev0.bib" # '0' is the most detailed version
-    crypto_url = "https://cryptobib.di.ens.fr/crypto.bib"
+    # --- CHANGED: Use the official GitHub Raw URLs ---
+    abbrev_url = "https://cryptobib.di.ens.fr/cryptobib/static/files/abbrev0.bib" # '0' is the most detailed version
+    crypto_url = "https://cryptobib.di.ens.fr/cryptobib/static/files/crypto.bib
 
-    print("Downloading abbrev0.bib...")
+    print(f"Downloading abbrev0.bib from {abbrev_url}...")
     abbrev_response = requests.get(abbrev_url)
     abbrev_response.raise_for_status()
     
-    print("Downloading crypto.bib...")
+    print(f"Downloading crypto.bib from {crypto_url}...")
     crypto_response = requests.get(crypto_url)
     crypto_response.raise_for_status()
 
@@ -34,19 +36,39 @@ def get_and_parse_cryptobib():
     # 5. Convert to DataFrame
     df = pd.DataFrame(bib_database.entries)
     
-    # Optional: clean up columns. 
-    # 'ID' is the citation key (e.g., 'BonehG05'). 
-    # 'ENTRYTYPE' is usually 'inproceedings' or 'article'.
     print(f"Successfully parsed {len(df)} entries.")
     
     return df
 
 if __name__ == "__main__":
-    df = get_and_parse_cryptobib()
-    
-    # Save as JSONL (preferred for Hugging Face as it handles large text better)
-    df.to_json("crypto_papers.jsonl", orient="records", lines=True, force_ascii=False)
-    
-    # Or CSV if you prefer
-    # df.to_csv("crypto_papers.csv", index=False, encoding='utf-8')
-    print("Saved to crypto_papers.jsonl")
+    # --- Part 1: Convert ---
+    try:
+        df = get_and_parse_cryptobib()
+        
+        output_filename = "crypto_papers.jsonl"
+        df.to_json(output_filename, orient="records", lines=True, force_ascii=False)
+        print(f"Saved locally to {output_filename}")
+
+        # --- Part 2: Upload to Hugging Face ---
+        # This gets the token from your GitHub Secrets (or local env if you set it)
+        hf_token = os.environ.get("HF_TOKEN")
+        
+        if hf_token:
+            print("HF_TOKEN found. Uploading to Hugging Face...")
+            api = HfApi()
+            
+            # UPLOAD COMMAND
+            # REPLACE 'YOUR_USERNAME/YOUR_DATASET_NAME' BELOW!
+            api.upload_file(
+                path_or_fileobj=output_filename,
+                path_in_repo=output_filename,
+                repo_id="harish-kar/cryptobib-auto-update-parser",  # <--- DON'T FORGET TO UPDATE THIS!
+                repo_type="dataset",
+                token=hf_token
+            )
+            print("Upload complete!")
+        else:
+            print("Warning: HF_TOKEN not found in environment variables. If you are running this locally, that's expected. If on GitHub, check your Secrets.")
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
