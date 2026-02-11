@@ -9,7 +9,7 @@ from huggingface_hub import HfApi
 def get_and_parse_cryptobib():
     # --- CHANGED: Use the official GitHub Raw URLs ---
     abbrev_url = "https://cryptobib.di.ens.fr/cryptobib/static/files/abbrev0.bib" # '0' is the most detailed version
-    crypto_url = "https://cryptobib.di.ens.fr/cryptobib/static/files/crypto.bib
+    crypto_url = "https://cryptobib.di.ens.fr/cryptobib/static/files/crypto.bib"
 
     print(f"Downloading abbrev0.bib from {abbrev_url}...")
     abbrev_response = requests.get(abbrev_url)
