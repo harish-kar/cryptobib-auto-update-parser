@@ -62,7 +62,7 @@ if __name__ == "__main__":
             api.upload_file(
                 path_or_fileobj=output_filename,
                 path_in_repo=output_filename,
-                repo_id="hk2617/cryptobib-search,  # <--- DON'T FORGET TO UPDATE THIS!
+                repo_id="hk2617/cryptobib-search",  # <--- DON'T FORGET TO UPDATE THIS!
                 repo_type="dataset",
                 token=hf_token
             )
